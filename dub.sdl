@@ -1,0 +1,7 @@
+name "flod-zlib"
+description "flod pipes for data (de)compression with zlib"
+license "BSL-1.0"
+copyright "Copyright © 2016, Adrian Matoga"
+targetType "library"
+authors "Adrian Matoga"
+dependency "flod" version="0.0.2"
