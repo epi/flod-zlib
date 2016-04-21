@@ -74,10 +74,10 @@ int encodeWindowBits(Format format, WindowBits windowBits)
 	}
 }
 
-@peekSink!ubyte @pullSource!ubyte
-private struct Deflater(Source) {
-	Source source;
-	z_stream stream;
+@filter!(ubyte, ubyte)(Method.peek, Method.pull)
+private struct Deflater(alias Context, A...) {
+	mixin Context!A;
+	private z_stream stream;
 
 	this()(int level, int windowBits, int memLevel, int strategy)
 	{
@@ -117,28 +117,27 @@ private struct Deflater(Source) {
 }
 
 ///
-auto deflate(Pipeline)(auto ref Pipeline pipeline, Format format = Format.zlib, Level level = Level.default_,
+auto deflate(S)(auto ref S schema, Format format = Format.zlib, Level level = Level.default_,
 	WindowBits windowBits = WindowBits.default_, MemLevel memLevel = MemLevel.default_,
 	Strategy strategy = Strategy.default_)
-	if (isPipeline!Pipeline)
+	if (isSchema!S)
 {
-	return pipeline.pipe!Deflater(level, encodeWindowBits(format, windowBits), memLevel, strategy);
+	return schema.pipe!Deflater(level, encodeWindowBits(format, windowBits), memLevel, strategy);
 }
 
 ///
-auto deflate(Pipeline)(auto ref Pipeline pipeline, Level level,
+auto deflate(S)(auto ref S schema, Level level,
 	WindowBits windowBits = WindowBits.default_, MemLevel memLevel = MemLevel.default_,
 	Strategy strategy = Strategy.default_)
-	if (isPipeline!Pipeline)
+	if (isSchema!schema)
 {
-	return deflate(pipeline, Format.zlib, level, windowBits, memLevel, strategy);
+	return deflate(schema, Format.zlib, level, windowBits, memLevel, strategy);
 }
 
-
-@peekSink!ubyte @pullSource!ubyte
-private struct Inflater(Source) {
-	Source source;
-	z_stream stream;
+@filter!(ubyte, ubyte)(Method.peek, Method.pull)
+private struct Inflater(alias Context, A...) {
+	mixin Context!A;
+	private z_stream stream;
 
 	this()(int windowBits)
 	{
@@ -185,17 +184,17 @@ private struct Inflater(Source) {
 }
 
 ///
-auto inflate(Pipeline)(auto ref Pipeline pipeline, Format format, WindowBits windowBits = WindowBits.default_)
-	if (isPipeline!Pipeline)
+auto inflate(S)(auto ref S schema, Format format, WindowBits windowBits = WindowBits.default_)
+	if (isSchema!S)
 {
-	return pipeline.pipe!Inflater(encodeWindowBits(format, windowBits));
+	return schema.pipe!Inflater(encodeWindowBits(format, windowBits));
 }
 
 ///
-auto inflate(Pipeline)(auto ref Pipeline pipeline)
-	if (isPipeline!Pipeline)
+auto inflate(S)(auto ref S pipeline)
+	if (isSchema!S)
 {
-	return pipeline.pipe!Inflater(0);
+	return schema.pipe!Inflater(0);
 }
 
 unittest
