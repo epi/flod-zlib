@@ -1,3 +1,4 @@
+///
 module flod.etc.zlib;
 
 import std.stdio;
@@ -98,6 +99,7 @@ private struct Deflater(alias Context, A...) {
 		stream.next_out = buf.ptr;
 		stream.avail_out = cast(uint) buf.length;
 		while (stream.avail_out) {
+			import std.algorithm : min;
 			auto ib = source.peek(buf.length);
 			auto flush = ib.length < buf.length ? Z_FINISH : Z_NO_FLUSH;
 			auto avail = cast(uint) min(uint.max, ib.length);
@@ -160,6 +162,7 @@ private struct Inflater(alias Context, A...) {
 		size_t offs = 0;
 		int result = Z_STREAM_END;
 		while (stream.avail_out) {
+			import std.algorithm : min;
 			auto ib = source.peek(buf.length);
 			if (ib.length == 0)
 				break;
@@ -191,10 +194,17 @@ auto inflate(S)(auto ref S schema, Format format, WindowBits windowBits = Window
 }
 
 ///
-auto inflate(S)(auto ref S pipeline)
+auto inflate(S)(auto ref S schema)
 	if (isSchema!S)
 {
 	return schema.pipe!Inflater(0);
+}
+
+unittest {
+	import std.algorithm : equal;
+	import std.string : representation;
+	import flod.range : byLine;
+	assert("foo\nbar\nbaz".representation.deflate.inflate.byLine.equal([ "foo", "bar", "baz" ]));
 }
 
 unittest
